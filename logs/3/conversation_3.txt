@@ -1,0 +1,238 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+다음 조건에 맞는 기차표를 예매해줘
+날짜 = 2025년 5월 15일
+출발역 = 서울
+도착역 = 부산
+기차표 개수 = 2개
+
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number
+비밀번호 = x_password
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 500 pixels
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/main
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/main', title='코레일 승차권예매')]
+Interactive elements from top layer of the current page inside the viewport:
+... 1500 pixels above - scroll or extract content to see more ...
+[0]<div />
+[1]<div />
+[2]<img />
+[3]<div />
+[4]<img />
+[5]<div />
+[6]<img />
+[7]<div />
+[8]<img />
+코레일은
+다양한 할인상품
+으로 고객에게 다가가고 있습니다.
+[9]<button Previous/>
+[10]<div />
+[11]<div />
+[12]<a 청소년 드림/>
+[13]<div />
+[14]<a 영업할인 공통안내/>
+[15]<div />
+[16]<a 4인동반석/>
+[17]<div />
+[18]<a 인터넷 특가/>
+[19]<div />
+[20]<a 공공할인/>
+[21]<div />
+[22]<a 다자녀 행복/>
+[23]<div />
+[24]<a 맘편한 KTX/>
+[25]<div />
+[26]<a 힘내라 청춘/>
+[27]<div />
+[28]<a 청소년 드림/>
+[29]<div />
+[30]<a 영업할인 공통안내/>
+[31]<div />
+[32]<a 4인동반석/>
+[33]<button Next/>
+[34]<img />
+[35]<img />
+종합이용 가이드
+[36]<a 승차권
+이용안내/>
+[37]<a 광명역
+도심공항터미널/>
+[38]<a 할인제도/>
+[39]<a 유실물/>
+[40]<a 승차권
+제휴할인/>
+[41]<a 열차운임/
+시간표/>
+공지사항
+[42]<a 더보기/>
+[43]<a 5월 2일 ITX-청춘 예발매일 변경 알림
+2025-04-01/>
+[44]<a 4월(4월1일~4월9일) 네이버페이머니 프로모션 알림
+2025-03-31/>
+[45]<a 4월(4월1일~4월9일) 토스페이 원클릭결제 프로모션 알림
+2025-03-31/>
+[46]<a 코레일 사칭 해킹메일 주의 안내
+2025-03-28/>
+[47]<a 교외선 열차 운행조정 알림
+2025-03-28/>
+[48]<a ’25년 산불 발생 관련 특별재난지역 자원봉사자 지원 안내
+2025-03-27/>
+[49]<button 위로 가기/>
+[50]<a 코레일 유튜브 (새창으로 열림)/>
+[51]<img />
+[52]<a 코레일 페이스북 (새창으로 열림)/>
+[53]<img />
+[54]<a 코레일 인스타 (새창으로 열림)/>
+[55]<img />
+[56]<a 코레일 블로그 (새창으로 열림)/>
+[57]<img />
+[58]<a 코레일 트위터 (새창으로 열림)/>
+[59]<img />
+[60]<a 이용약관/>
+[61]<a 새 창으로 열기>여객운송약관 및 부속약관/>
+[62]<a 개인정보처리방침/>
+[63]<a 이메일무단수집거부/>
+[64]<a 새 창으로 열기>저작권정책/>
+[65]<a 지원 브라우저 안내/>
+[66]<img />
+상호 : 한국철도공사
+사업자등록 : 314-82-10024
+통신판매업신고 : 대전 동구 - 0233호
+34618 대전광역시 동구 중앙로 240
+대표전화 : 1588-7788
+팩스번호 02-361-8385
+COPYRIGHT(C) KOREA RAILROAD. ALL RIGHTS RESERVED.
+관련 사이트
+... 121 pixels below - scroll or extract content to see more ...
+Current step: 2/500Current date and time: 2025-04-03 16:30
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Failed - Still unable to find the booking button or section",
+    "memory": "Current URL: https://www.korail.com/ticket/main. Currently at step 2 of scrolling to view relevant booking options.",
+    "next_goal": "Scroll down further to locate the booking section."
+  },
+  "action": [
+    {
+      "scroll_down": {
+        "amount": 500
+      }
+    }
+  ]
+}

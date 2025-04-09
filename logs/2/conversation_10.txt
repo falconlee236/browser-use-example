@@ -1,0 +1,335 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+2025년 5월 15일에 서울에서 부산가는 기차표를 2매 예약해줘.
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number
+비밀번호 = x_password
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action input_text: Failed to input text into index 22
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action click_element: Element with index 32 does not exist - retry or use alternative actions
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 200 pixels
+
+ AIMessage 
+{
+  "state_analysis": "The booking page has been successfully accessed, but there was difficulty selecting the departure and arrival locations. Now, the locations are displayed to choose from in a modal dialog.",
+  "progress_evaluation": "Progress towards the ultimate goal: 4/500 (0.8%). The task is progressing, but no selection has been made yet.",
+  "challenges": [
+    "Previous selection attempts resulted in failure due to missing interactive elements.",
+    "Navigating the dropdown for stations may require further scrolling or interaction to ensure visibility."
+  ],
+  "next_steps": [
+    "Select '\uc11c\uc6b8' as the departure station from the displayed modal.",
+    "After selecting departure, choose '\ubd80\uc0b0' as the arrival station.",
+    "Confirm the date and proceed to search for available trains."
+  ],
+  "reasoning": "Selecting the stations from the displayed modal is necessary to circumvent any previously encountered issues. To continue with the booking process, accurate input of the location will be essential."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 7:
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 9:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔙  Navigated back
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action click_element: Element with index 32 does not exist - retry or use alternative actions
+
+ AIMessage 
+{
+  "state_analysis": "Currently back at the main booking page after a detour. The station selection modal has reappeared, allowing for the selection of departure and arrival stations.",
+  "progress_evaluation": "Progress towards the ultimate goal: 8/500 (1.6%). The process is still ongoing, but more interaction is needed to select the required stations and date.",
+  "challenges": [
+    "Need to ensure correct selection from the dropdown menu for both departure (\uc11c\uc6b8) and arrival (\ubd80\uc0b0).",
+    "Continued difficulties with element indexing might require a new approach to select the appropriate stations."
+  ],
+  "next_steps": [
+    "Try scrolling to ensure both departure and arrival stations are in view.",
+    "Select '\uc11c\uc6b8' as the departure station again.",
+    "Select '\ubd80\uc0b0' for the arrival station, followed by confirmation of the travel date."
+  ],
+  "reasoning": "Retrieving the stations again requires visibility within the modal. Ensuring the correct selections will help proceed to the next steps in the booking process."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 0: 주메뉴 바로가기
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 8: 4인동반석
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/discountSystem/4people
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/discountSystem/4people', title='4인동반석')]
+Interactive elements from top layer of the current page inside the viewport:
+[Start of page]
+본문 바로가기
+[0]<a 주메뉴 바로가기/>
+[1]<a 코레일 기업홍보 사이트로 이동>한국철도/>
+[2]<a 코레일 승차권예매 사이트로 이동>승차권예매/>
+[3]<a 코레일 기차여행 사이트로 이동>기차여행/>
+[4]<a 로그인/>
+[5]<a 장바구니/>
+[6]<a 마이페이지/>
+[7]<a 고객센터/>
+[8]<a 기업전용/>
+[9]<select 사이트 언어>Language
+English
+中國語
+日本語/>
+[10]<a 코레일 승차권예매 메인페이지로 이동/>
+[11]<a 승차권/>
+[12]<a 철도역·열차/>
+[13]<a 고객서비스/>
+[14]<a 코레일멤버십/>
+[15]<button 전체 메뉴 열기/>
+할인제도 안내
+[16]<a 홈/>
+[17]<button 1depth 메뉴 목록;false>할인제도 안내/>
+[18]<button 인쇄/>
+[19]<li />
+[20]<a 영업할인 공통안내/>
+[21]<li />
+[22]<a 청소년 드림/>
+[23]<li />
+[24]<a 힘내라 청춘/>
+[25]<li />
+[26]<a 맘편한 코레일/>
+[27]<li />
+[28]<a 다자녀 행복/>
+[29]<li />
+[30]<a 공공할인/>
+[31]<li />
+[32]<a 현재 선택된 탭>4인동반석/>
+[33]<li />
+[34]<a 인터넷 특가/>
+[35]<li />
+[36]<a 단체할인/>
+[37]<li />
+[38]<a 정기승차권/>
+[39]<li />
+[40]<a 입석,자유석,환승할인/>
+[41]<li />
+[42]<a 기차누리/>
+[43]<li />
+[44]<a N카드(ITX-청춘)/>
+[45]<li />
+[46]<a N카드(KTX,새마을)/>
+[47]<li />
+[48]<a 모범납세자/>
+승차권 예매
+할인대상
+코레일멤버십 회원 누구나
+할인율
+코레일톡 및 홈페이지에서 구매 시 열차별 승차율 및 예매시점에 따라 어른은 15∼35%까지 할인되며, 어린이 또는 유아가 함께 이용할 경우 어린이(6세~13세 미만)는 어린이 할인, 유아(6세 미만)는 동반 유아 좌석 지정 할인이 적용됩니다.
+이용방법
+4인 동반석의 동반 유아 좌석 지정 할인은 1세트(SET) 당 2명으로 제한됩니다.
+4인 동반석은 KTX, KTX-산천 열차의 마주보고 앉아가는 4인 동반석을 4인(4좌석)이 이용하는 경우 한 장의 승차권(1세트)으로 판매하며, 1회 1세트, 열차당 최대 2세트까지 구입 가능합니다.
+구매한 동반석 세트 승차권과 다른 조건(인원수, 연령)임에도 해당 세트 승차권을 이용하여 승차하는 경우 부정승차로서 할인금액 회수 및 10배이내의 부가운임을 수수하므로, 조건 변경 시에는 해당 세트 상차권을 반환하고 새로운 조건에 맞는 승차권으로 구매하여야 합니다.
+코레일톡 및 코레일 홈페이지에서 구입한 승차권을 역 창구에서 변경 시 할인이 취소될 수 있습니다.
+철도공사에서 정한
+명절 특별 수송기간
+에는 운영하지 않습니다.
+4인 동반석 할인은 열차별 승차율 및 예매시점에 따라 운영되며, 고객이 원하는 시간대에 할인열차가 운행되지 않거나, 할인율이 사전 공지 없이 변경될 수 있으며, 열차 출발 24시간 전부터 낱장의 승차권으로 판매됩니다.
+[49]<a 코레일 유튜브 (새창으로 열림)/>
+[50]<img />
+[51]<a 코레일 페이스북 (새창으로 열림)/>
+[52]<img />
+[53]<a 코레일 인스타 (새창으로 열림)/>
+[54]<img />
+[55]<a 코레일 블로그 (새창으로 열림)/>
+[56]<img />
+[57]<a 코레일 트위터 (새창으로 열림)/>
+[58]<img />
+[59]<a 이용약관/>
+[60]<a 새 창으로 열기>여객운송약관 및 부속약관/>
+[61]<a 개인정보처리방침/>
+[62]<a 이메일무단수집거부/>
+[63]<a 새 창으로 열기>저작권정책/>
+[64]<a 지원 브라우저 안내/>
+[65]<img />
+상호 : 한국철도공사
+사업자등록 : 314-82-10024
+통신판매업신고 : 대전 동구 - 0233호
+34618 대전광역시 동구 중앙로 240
+대표전화 : 1588-7788
+팩스번호 02-361-8385
+COPYRIGHT(C) KOREA RAILROAD. ALL RIGHTS RESERVED.
+[66]<button false;관련 사이트 선택>관련 사이트/>
+... 516 pixels below - scroll or extract content to see more ...
+Current step: 9/500Current date and time: 2025-04-03 16:19
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success - The relevant discount information is displayed.",
+    "memory": "Currently displayed the discount page, which does not seem relevant for ticket booking. Current step: 9/500. Need to navigate back to the main booking page and repeat the process.",
+    "next_goal": "Return to the main ticket booking page."
+  },
+  "action": [
+    {
+      "go_back": {}
+    }
+  ]
+}

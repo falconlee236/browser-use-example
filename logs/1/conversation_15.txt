@@ -1,0 +1,465 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+2025년 5월 15일에 서울에서 부산가는 기차표를 2매 예약해줘.
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number
+비밀번호 = x_password
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled up the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 4: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 24: 휴대폰 번호
+
+ AIMessage 
+```tool_code
+print(default_api.AgentOutput(action = [{"type_text": {"element_index": 28, "text": "<secret>x_number</secret>"}}, {"type_text": {"element_index": 29, "text": "<secret>x_password</secret>"}}, {"click_element": {"index": 30}}], current_state = {"evaluation_previous_goal": "Success - Switched to phone number login.", "memory": "I am on the Korail login page. I need to enter my phone number (<secret>x_number</secret>) and password (<secret>x_password</secret>) and then click the login button to proceed.", "next_goal": "Enter phone number, enter password, and click the login button."}))
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 28
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 29
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 30: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 34: 출발일 선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Sent keys: Escape
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by one page
+
+ AIMessage 
+```tool_code
+print(default_api.AgentOutput(action = [{"click_element": {"index": 28}}], current_state = {"evaluation_previous_goal": "Success - I closed the non-interactive calendar pop-up. The train ticket booking form is visible.", "memory": "I am logged in to Korail. The task is to book 2 train tickets from Seoul (서울) to Busan (부산) for May 15th, 2025, evening time, with adjacent seats (window preferred). The booking form is visible. I need to select the departure date.", "next_goal": "Click the departure date input to open the calendar."}))
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 28: 출발일 선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 35: 출발일 선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action click_element: Element with index 32 does not exist - retry or use alternative actions
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Sent keys: Escape
+
+ AIMessage 
+```json
+{
+    "state_analysis": "I am logged in to the Korail website, and the calendar pop-up is currently displayed. I previously tried to interact with the calendar, but the elements were not recognized. I've closed the pop-up with Escape.",
+    "progress_evaluation": "20% - I've successfully logged in. The next step is to select the date and other booking details.",
+    "challenges": "The calendar elements are not easily selectable using the element indices. I need to figure out how to select the date of travel.",
+    "next_steps": [
+        "Click the departure date input again to re-open the calendar.",
+        "If the calendar elements are still not directly selectable by index, try scrolling the page to see if the calendar elements become interactive.",
+        "If scrolling doesn't work, try to use alternative methods to select the date."
+    ],
+    "reasoning": "Since I was not able to interact with the date selection calendar elements, I will try opening the calendar again to see if the element list has changed or if there is a way to make it interactable. If not, I will try some alternative methods."
+}
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Sent keys: Escape
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 19: Next
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/main
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/main', title='코레일 승차권예매')]
+Interactive elements from top layer of the current page inside the viewport:
+... 1621 pixels above - scroll or extract content to see more ...
+[0]<button Previous/>
+[1]<div />
+[2]<div />
+[3]<div />
+[4]<div />
+[5]<div />
+[6]<div />
+[7]<div />
+[8]<div />
+[9]<div />
+[10]<div />
+[11]<div />
+[12]<div />
+[13]<button Next/>
+종합이용 가이드
+승차권
+이용안내
+광명역
+도심공항터미널
+할인제도
+유실물
+승차권
+제휴할인
+열차운임/
+시간표
+공지사항
+더보기
+5월 2일 ITX-청춘 예발매일 변경 알림
+2025-04-01
+4월(4월1일~4월9일) 네이버페이머니 프로모션 알림
+2025-03-31
+4월(4월1일~4월9일) 토스페이 원클릭결제 프로모션 알림
+2025-03-31
+코레일 사칭 해킹메일 주의 안내
+2025-03-28
+교외선 열차 운행조정 알림
+2025-03-28
+’25년 산불 발생 관련 특별재난지역 자원봉사자 지원 안내
+2025-03-27
+위로 가기
+이용약관
+여객운송약관 및 부속약관
+개인정보처리방침
+이메일무단수집거부
+저작권정책
+지원 브라우저 안내
+상호 : 한국철도공사
+사업자등록 : 314-82-10024
+통신판매업신고 : 대전 동구 - 0233호
+34618 대전광역시 동구 중앙로 240
+대표전화 : 1588-7788
+팩스번호 02-361-8385
+COPYRIGHT(C) KOREA RAILROAD. ALL RIGHTS RESERVED.
+관련 사이트
+[14]<div />
+[15]<div dialog>날짜 선택
+시간선택/>
+[16]<button 레이어닫기/>
+[17]<a 2025년 04월 03일(목)
+16시 이후 출발/>
+[18]<button Previous/>
+[19]<button Next/>
+[20]<div 2025. 04.
+달력
+일
+월
+화
+수
+목
+금
+토
+1
+2
+3
+출발일
+4
+5
+8
+9
+10
+11
+12
+15
+16
+17
+18
+19
+22
+23
+24
+25
+26
+29
+30/>
+[21]<a />
+[22]<a />
+[23]<a 6/>
+[24]<a 7/>
+[25]<a 13/>
+[26]<a 14/>
+[27]<a 20/>
+[28]<a 21/>
+[29]<a 27/>
+[30]<a 28/>
+[31]<div 2025. 05.
+달력
+일
+월
+화
+수
+목
+금
+토/>
+[32]<a />
+[33]<a />
+[34]<a />
+[35]<a />
+[36]<a 1/>
+[37]<a 2/>
+[38]<a 3/>
+[39]<a 4/>
+[40]<a 5/>
+[41]<a 6/>
+[42]<a 7/>
+[43]<a 8/>
+[44]<a 9/>
+[45]<a 10/>
+[46]<a 11/>
+[47]<a 12/>
+[48]<a 13/>
+[49]<a 14/>
+[50]<a 15/>
+[51]<a 16/>
+[52]<a 17/>
+[53]<a 18/>
+[54]<a 19/>
+[55]<a 20/>
+[56]<a 21/>
+[57]<a 22/>
+[58]<a 23/>
+[59]<a 24/>
+[60]<a 25/>
+[61]<a 26/>
+[62]<a 27/>
+[63]<a 28/>
+[64]<a 29/>
+[65]<a 30/>
+[66]<a 31/>
+[67]<button Previous/>
+[68]<div 12시
+13시
+14시
+15시
+21시
+22시
+23시/>
+[69]<div 07시/>
+[70]<div 08시/>
+[71]<div 09시/>
+[72]<div 10시/>
+[73]<div 11시/>
+[74]<div />
+[75]<a 선택한 시간>16시/>
+[76]<div />
+[77]<a 17시/>
+[78]<div />
+[79]<a 18시/>
+[80]<div />
+[81]<a 19시/>
+[82]<div />
+[83]<a 20시/>
+[84]<button Next/>
+[85]<button 취소/>
+[86]<button 적용/>
+[End of page]
+Current step: 14/500Current date and time: 2025-04-03 16:03
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success - I clicked the next month button and the calendar now shows May 2025.",
+    "memory": "I am logged in to Korail. The task is to book 2 train tickets from Seoul (\uc11c\uc6b8) to Busan (\ubd80\uc0b0) for May 15th, 2025, evening time, with adjacent seats (window preferred). The calendar pop-up is open showing May 2025.",
+    "next_goal": "Select the 15th of May, select 18:00 as the departure time, and click the 'Apply' button."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 50
+      }
+    },
+    {
+      "click_element": {
+        "index": 79
+      }
+    },
+    {
+      "click_element": {
+        "index": 86
+      }
+    }
+  ]
+}

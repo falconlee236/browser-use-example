@@ -1,0 +1,1031 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+기차표를 예매해줘
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+예약 다하면 아래에 있는 예약 버튼을 눌러서 예약 확인 페이지까지 보여주면 완료야
+
+
+<중요 정보>
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number 비밀번호 = x_password     
+조건은 다음과 같아
+날짜 = 2025년 5월 15일
+출발역 = 서울
+도착역 = 부산
+기차표 개수 = 2개
+
+<참고사항>
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+제발 overlay된 html 속성을 집중하고, 그게 어려우면 먼저 예약 버튼을 누르고 설정하자.
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 100 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 5: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 24: 휴대폰 번호
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 28
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 29
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 30: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 37: 출발역 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 7
+
+ AIMessage 
+{
+  "state_analysis": "The login process was successful, and I've navigated back to the ticket booking main page. Currently, I'm at the stage where I need to select the departure and arrival stations, as well as the departure date and number of passengers.",
+  "progress_evaluation": "Completed 4 out of 10 steps (40%). Successfully logged in and reached the ticket search section.",
+  "challenges": [
+    "Need to correctly select the departure station (Seoul) from the dialog box that appeared.",
+    "Ensure the arrival station (Busan) is also selected.",
+    "Possible complications in selecting available times for the specified date."
+  ],
+  "next_steps": [
+    "Select '\uc11c\uc6b8' (Seoul) from the station selection dialog.",
+    "Then, find and select '\ubd80\uc0b0' (Busan) for the arrival station.",
+    "Confirm the date and proceed to search for the available tickets."
+  ],
+  "reasoning": "Selecting the departure and arrival stations is crucial to search for the correct train tickets. It's important to finalize these options before proceeding to check for available seats."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 94: 서울
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 38: 도착역 선택
+
+ HumanMessage 
+Action result: 🔍  Scrolled to text: 부산
+
+ HumanMessage 
+Action result: Something new appeared after action 2 / 5
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 120: 부산
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: Text '2025년 5월 15일' not found or not visible on page
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 40: 출발일 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 2 / 4
+
+ AIMessage 
+{
+  "state_analysis": "The departure date selection dialog is open, but I need to navigate to select May 15, 2025. Currently, I need to ensure the date is set before moving on to search for available tickets.",
+  "progress_evaluation": "Completed 6 out of 10 steps (60%). Departures and arrivals are selected, but the departure date still needs to be set.",
+  "challenges": [
+    "Navigating the calendar to select the correct date.",
+    "Ensuring the time preferences align with the request for evening trains."
+  ],
+  "next_steps": [
+    "Scroll to find May 15, 2025 in the calendar and select it.",
+    "Confirm the time preference for the ticket.",
+    "Proceed to search for available train tickets."
+  ],
+  "reasoning": "Setting the correct date and time is essential to check for available tickets that meet the user's preferences. Completing this step will enable the transition to the ticket search phase."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 90: Next
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 116: 15
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 152: 19시
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 159: 적용
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 42: 열차 조회하기
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 35: 일반실
+59,800원
+5%적립
+
+ AIMessage 
+{
+  "state_analysis": "I've reached the train selection page, and several evening train options from Seoul to Busan are visible. I've selected the general seats, but now I need to check for seat availability and whether two adjacent window seats are available.",
+  "progress_evaluation": "Completed 8 out of 10 steps (80%). Stations, date, time, and seat type have been set\u2014all relevant selections made.",
+  "challenges": [
+    "Identify and select two adjacent window seats.",
+    "Confirm that the selected seats meet the preference criteria."
+  ],
+  "next_steps": [
+    "Search for available adjacent window seats for the selected train.",
+    "Proceed to finalize the selection and confirm the booking."
+  ],
+  "reasoning": "It's crucial to ensure that the selected seats meet the user's preferences before completing the booking process. Once seats are confirmed, the booking can be finalized."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 60: 좌석선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 87: 9C
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 64: 12B
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+{
+  "state_analysis": "The seat selection dialog indicated that only one seat can be selected due to the number of passengers entered. The user wants to reserve two adjacent seats, which were not successfully selected in the previous attempts.",
+  "progress_evaluation": "Completed 8 out of 10 steps (80%). Selected one seat, but need to ensure two adjacent seats are booked.",
+  "challenges": [
+    "Need to select two adjacent seats based on the user\u2019s requirements.",
+    "Correct the seat selection process to avoid error messages regarding passenger limits."
+  ],
+  "next_steps": [
+    "Clear the current seat selection and start over to choose two adjacent seats.",
+    "Make sure to select the correct seating configuration that allows for adjacent seating.",
+    "Confirm the seat selection and proceed with booking."
+  ],
+  "reasoning": "Selecting two adjacent seats is essential to meet the user's requirement for seating during the train journey. Ensuring that the seat selection process is correctly followed will enable the booking to be finalized."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 37:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 레이어닫기
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 5
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 60: 좌석선택
+
+ AIMessage 
+{
+  "state_analysis": "I'm currently on the seat selection page but need to ensure that I select two adjacent window seats for the two passengers. Previous attempts have indicated issues with seat reservation, but I'm back at the selection interface now.",
+  "progress_evaluation": "Completed 8 out of 10 steps (80%). Seats are available for selection, but I need to finalize the correct adjacent seating.",
+  "challenges": [
+    "Accurately select two adjacent window seats to meet the user's preference.",
+    "Confirm that the correct seat type is selected before proceeding with the booking."
+  ],
+  "next_steps": [
+    "Select seat 9C and its adjacent window seat 9D or other available adjacent options.",
+    "Confirm the selection and proceed to finalize the booking.",
+    "Ensure that total passenger count matches the seat reservation."
+  ],
+  "reasoning": "Selecting two adjacent window seats is crucial to meet user requirements before confirming the booking. This will allow the transition to the finalization of the ticket booking process."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 58: 9B
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 56: 8B
+순방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+{
+  "state_analysis": "I'm back on the seat selection interface with options visible for choosing seats. The previous attempt to book seats didn't fulfill the requirement for two adjacent seats. Now I need to proceed by making the right selections carefully.",
+  "progress_evaluation": "Completed 8 out of 10 steps (80%). Must successfully select two adjacent window seats and finalize the booking.",
+  "challenges": [
+    "Need to ensure that I select two adjacent window seats that meet the user's preference.",
+    "Avoid previous errors in seat selection and confirm successfully."
+  ],
+  "next_steps": [
+    "Select two adjacent seats such as 9B and 9C.",
+    "Confirm the selection and proceed with finalizing the booking.",
+    "Make sure to adhere to all preference conditions."
+  ],
+  "reasoning": "Finalizing the seat selection is essential before moving forward to confirm the booking. Ensuring the seats are adjacent and meet user preferences will help complete the task successfully."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 87: 9C
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 87: 9C
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ AIMessage 
+{
+  "state_analysis": "On the seat selection interface with available train options. Previous seating preferences led to errors in selection, but now the focus is on confirming the correct adjacent seats for booking.",
+  "progress_evaluation": "Completed 8 out of 10 steps (80%). Current focus is on selecting the right seats for the journey.",
+  "challenges": [
+    "Selecting two adjacent window seats without encountering any error messages.",
+    "Ensuring all seat selections align with user preferences."
+  ],
+  "next_steps": [
+    "Select seat 9C and 9D to meet the requirement for two adjacent window seats.",
+    "Confirm the selection and proceed to finalize the booking.",
+    "Make sure to check all details before submitting the reservation."
+  ],
+  "reasoning": "Ensuring the selection of two adjacent window seats is critical to meeting the user's needs. Completing this action will allow the task's culmination through booking."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 87: 9C
+역방향
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 3
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: 확인
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/search/list
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/search/list', title='열차 목록>승차권 예매>예매>승차권')]
+Interactive elements from top layer of the current page inside the viewport:
+... 68 pixels above - scroll or extract content to see more ...
+[0]<a 본문 바로가기/>
+[1]<a 주메뉴 바로가기/>
+[2]<a 코레일 기업홍보 사이트로 이동>한국철도/>
+[3]<a 코레일 승차권예매 사이트로 이동>승차권예매/>
+[4]<a 코레일 기차여행 사이트로 이동>기차여행/>
+[5]<a 로그아웃/>
+[6]<a 장바구니/>
+[7]<a 마이페이지/>
+[8]<a 고객센터/>
+[9]<a 기업전용/>
+[10]<select 사이트 언어>Language
+English
+中國語
+日本語/>
+승차권
+철도역·열차
+고객서비스
+코레일멤버십
+승차권 예매
+홈
+예매
+승차권 예매
+이전날
+2025-04-03(목) 19:00
+다음날
+출발역
+서울
+출발지/도착지 전환
+도착역
+부산
+인원 선택 총 1명
+일반석
+직통
+왕복
+인접역 포함
+SR연계 포함
+전체
+KTX/KTX-산천
+새마을호/ITX-새마을
+무궁화호/누리로
+ITX-청춘
+KTX
+061
+서울
+→
+부산
+(
+19:35
+~
+22:09
+)
+소요시간
+:
+2시간 34분
+일반실
+59,800원
+5%적립
+특실(매진임박)
+83,700원
+5%적립
+KTX
+063
+서울
+→
+부산
+(
+19:58
+~
+22:37
+)
+소요시간
+:
+2시간 39분
+일반실
+59,800원
+5%적립
+특실(매진임박)
+83,700원
+5%적립
+ITX-새마을
+1013
+서울
+→
+부산
+(
+20:18
+~
+00:57
+)
+소요시간
+:
+4시간 39분
+일반실
+42,600원
+-
+KTX
+065
+서대구정차
+서울
+→
+부산
+(
+20:28
+~
+23:00
+)
+소요시간
+:
+2시간 32분
+일반실
+59,400원
+5%적립
+특실(매진임박)
+83,200원
+5%적립
+KTX
+109
+서대구,구포정차
+서울
+→
+부산
+(
+20:49
+~
+00:02
+)
+소요시간
+:
+3시간 13분
+일반실
+53,500원
+5%적립
+특실
+74,900원
+5%적립
+KTX
+067
+서울
+→
+부산
+(
+20:58
+~
+23:45
+)
+소요시간
+:
+2시간 47분
+일반실
+59,800원
+5%적립
+특실
+83,700원
+5%적립
+KTX
+069
+서울
+→
+부산
+(
+21:28
+~
+00:04
+)
+소요시간
+:
+2시간 36분
+일반실
+59,800원
+특실
+83,700원
+[11]<a 일반실
+59,800원
+5%적립/>
+[12]<a 특실(매진임박)
+83,700원
+5%적립/>
+[13]<a 일반실
+59,800원
+5%적립/>
+[14]<a 특실(매진임박)
+83,700원
+5%적립/>
+[15]<a 일반실
+53,500원
+5%적립/>
+[16]<a 특실
+74,900원
+5%적립/>
+[17]<a 더보기/>
+[18]<button 다음날
+(
+25년04월04일
+)
+조회/>
+예매 숨기기 버튼
+일반실
+자유석1량>
+열차시각
+운임요금
+좌석선택
+예매
+[19]<a 코레일 유튜브 (새창으로 열림)/>
+[20]<img />
+[21]<a 코레일 페이스북 (새창으로 열림)/>
+[22]<img />
+[23]<a 코레일 인스타 (새창으로 열림)/>
+[24]<img />
+[25]<a 코레일 블로그 (새창으로 열림)/>
+[26]<img />
+[27]<a 코레일 트위터 (새창으로 열림)/>
+[28]<img />
+[29]<a 이용약관/>
+[30]<a 새 창으로 열기>여객운송약관 및 부속약관/>
+[31]<a 개인정보처리방침/>
+[32]<a 이메일무단수집거부/>
+[33]<a 새 창으로 열기>저작권정책/>
+[34]<a 지원 브라우저 안내/>
+[35]<img />
+[36]<button false;관련 사이트 선택>관련 사이트/>
+[37]<div />
+[38]<div dialog>좌석선택
+(
+KTX
+,
+61
+)
+1호차
+(
+15석
+)
+1
+6호차
+(
+15석
+)
+6
+7호차
+(
+10석
+)
+7
+8호차
+(
+13석
+)
+8
+유아동반석
+9호차
+(
+10석
+)
+9
+10호차
+(
+17석
+)
+10
+11호차
+(
+12석
+)
+11
+12호차
+(
+16석
+)
+12
+13호차
+(
+16석
+)
+13
+14호차
+(
+18석
+)
+14
+15호차
+(
+15석
+)
+15
+16호차
+(
+17석
+)
+16
+17호차
+(
+17석
+)
+17
+순방향
+역방향
+선택
+불가
+콘센트
+USB
+1A뒤, 3A앞, 5A앞, 8A뒤, 10D앞, 12D앞, 14D뒤, 15D뒤 좌측에 8개의 콘센트 있음
+                                            1D뒤, 3D앞, 5D앞, 8D뒤, 10A앞, 12A앞, 14A뒤, 15A뒤 우측에 8개의 콘센트 있음
+                                            8열과 9열 사이 테이블이 좌측, 우측에 있음
+                                            객실 뒤편 공간 좌측에 음료/스낵자판기, 휴대물품보관소 우측에 휴대물품보관소 있음
+서울
+부산/>
+[39]<button 레이어닫기/>
+[40]<a 열차 호차 선택>9호차
+(
+10석
+)/>
+[41]<a 1A
+선택불가/>
+[42]<a 1B
+선택불가/>
+[43]<a 2A
+선택불가/>
+[44]<a 2B
+선택불가/>
+[45]<a 3A
+선택불가/>
+[46]<a 3B
+선택불가/>
+[47]<a 4A
+선택불가/>
+[48]<a 4B
+선택불가/>
+[49]<a 5A
+선택불가/>
+[50]<a 5B
+선택불가/>
+[51]<a 6A
+선택불가/>
+[52]<a 6B
+선택불가/>
+[53]<a 7A
+선택불가/>
+[54]<a 7B
+선택불가/>
+[55]<a 8A
+선택불가/>
+[56]<a 8B
+순방향/>
+[57]<a 9A
+역방향/>
+[58]<a 선택한 좌석>9B
+역방향/>
+[59]<a 10A
+선택불가/>
+[60]<a 10B
+선택불가/>
+[61]<a 11A
+선택불가/>
+[62]<a 11B
+역방향/>
+[63]<a 12A
+선택불가/>
+[64]<a 12B
+역방향/>
+[65]<a 13A
+선택불가/>
+[66]<a 13B
+선택불가/>
+[67]<a 14A
+선택불가/>
+[68]<a 14B
+선택불가/>
+[69]<a 15A
+선택불가/>
+[70]<a 15B
+역방향/>
+[71]<a 1C
+선택불가/>
+[72]<a 1D
+선택불가/>
+[73]<a 2C
+선택불가/>
+[74]<a 2D
+선택불가/>
+[75]<a 3C
+선택불가/>
+[76]<a 3D
+선택불가/>
+[77]<a 4C
+선택불가/>
+[78]<a 4D
+선택불가/>
+[79]<a 5C
+선택불가/>
+[80]<a 5D
+선택불가/>
+[81]<a 6C
+선택불가/>
+[82]<a 6D
+선택불가/>
+[83]<a 7C
+선택불가/>
+[84]<a 7D
+선택불가/>
+[85]<a 8C
+선택불가/>
+[86]<a 8D
+선택불가/>
+[87]<a 9C
+역방향/>
+[88]<a 9D
+선택불가/>
+[89]<a 10C
+역방향/>
+[90]<a 10D
+선택불가/>
+[91]<a 11C
+선택불가/>
+[92]<a 11D
+선택불가/>
+[93]<a 12C
+역방향/>
+[94]<a 12D
+선택불가/>
+[95]<a 13C
+선택불가/>
+[96]<a 13D
+선택불가/>
+[97]<a 14C
+선택불가/>
+[98]<a 14D
+선택불가/>
+[99]<a 15C
+역방향/>
+[100]<a 15D
+선택불가/>
+[101]<button 선택적용
+(
+1명 좌석 선택
+/
+총 1명
+)/>
+... 740 pixels below - scroll or extract content to see more ...
+Current step: 30/500Current date and time: 2025-04-03 17:35
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Failed - One seat is selected, and there is a need for two adjacent seats.",
+    "memory": "Currently only one seat selected for booking. Need two adjacent window seats\u2014proper selection adjustments are required.",
+    "next_goal": "Clear any previous selections, select two adjacent available seats such as 9C and 9D."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 87
+      }
+    },
+    {
+      "click_element": {
+        "index": 88
+      }
+    },
+    {
+      "click_element": {
+        "index": 101
+      }
+    }
+  ]
+}

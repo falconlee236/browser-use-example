@@ -1,0 +1,628 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+기차표를 예매해줘
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+예약 다하면 아래에 있는 예약 버튼을 눌러서 예약 확인 페이지까지 보여주면 완료야
+
+
+<중요 정보>
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number 비밀번호 = x_password     
+조건은 다음과 같아
+날짜 = 2025년 5월 1일
+출발역 = 서울
+도착역 = 부산
+인원수 = 2명
+
+<참고사항>
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+제발 overlay된 html 속성을 집중하고, 그게 어려우면 먼저 예약 버튼을 누르고 설정하자.
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 100 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 5: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 24: 휴대폰 번호
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 28
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 29
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 30: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 37: 출발역 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 4
+
+ AIMessage 
+{
+  "state_analysis": "The login was successful, and now the departure station selection interface is displayed. The next required action is to select '\uc11c\uc6b8' (Seoul) as the departure station.",
+  "progress_evaluation": "Progress is at 40%. The login phase is complete, and the station selection is underway.",
+  "challenges": "Navigating the various interactive elements to select the correct departure station might be cumbersome.",
+  "next_steps": [
+    "Select '\uc11c\uc6b8' as the departure station.",
+    "Proceed to select the arrival station '\ubd80\uc0b0'.",
+    "Select the departure date as '2025-05-01'."
+  ],
+  "reasoning": "Selecting '\uc11c\uc6b8' now will allow the booking process to move forward without delay. After that, setting '\ubd80\uc0b0' as the arrival station and the date will finalize the necessary fields before searching for available trains."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 94: 서울
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 38: 도착역 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 5
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 117: 부산
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action input_text: Failed to input text into index 40
+
+ AIMessage 
+{
+  "state_analysis": "Currently on the train booking page, '\uc11c\uc6b8' and '\ubd80\uc0b0' have been successfully selected as departure and arrival stations respectively. An error occurred while attempting to input the travel date and passenger count.",
+  "progress_evaluation": "Progress is at 50%. Departure and arrival stations are set, but the date and number of passengers need correction.",
+  "challenges": "An error in inputting the travel date presents a challenge. The correct interactive element needs to be targeted deliberately.",
+  "next_steps": [
+    "Attempt to set the travel date to '2025-05-01' again.",
+    "Input '2' for the number of passengers.",
+    "Click the search button to find available trains."
+  ],
+  "reasoning": "Retrying the date input is necessary as the next step requires correct date and passenger details to search for trains. Following this, accessing the search button will move forward with ticket booking."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 40: 출발일 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 5
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 90: Next
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 102: 1
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 154: 14시
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 159:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action input_text: Failed to input text into index 41
+
+ AIMessage 
+{
+  "state_analysis": "The travel date is successfully set to May 1, 2025, at 22:00. However, there is still an issue with inputting the number of passengers.",
+  "progress_evaluation": "Progress is at 60%. Major fields are filled, and the next step is to successfully input the passenger count and begin the search.",
+  "challenges": "There seems to be an ongoing issue with the input field for passengers. The correct interactive element may need to be located and activated appropriately.",
+  "next_steps": [
+    "Locate the correct input element for the number of passengers.",
+    "Input '2' again for the passenger count.",
+    "Click the search button to fetch available train options."
+  ],
+  "reasoning": "The focus on ensuring the correct number of passengers is set is vital to proceed with the search for train tickets. Fixing input errors quickly will allow the next phase of booking."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 41: 맘편한 KTX
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔗  Navigated to https://www.korail.com/ticket/main
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 37: 출발역 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 7
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 98: 서울
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 7
+
+ AIMessage 
+{
+  "state_analysis": "Back at the main ticket booking page. Need to go through the selection process again for the trip to Busan from Seoul.",
+  "progress_evaluation": "Progress has reset. Currently at 0% as all previous settings will have to be reconfigured.",
+  "challenges": "Re-selection of stations, date, and time can consume additional time, leading to possible ticket unavailability.",
+  "next_steps": [
+    "Select '\uc11c\uc6b8' as the departure station.",
+    "Select '\ubd80\uc0b0' as the arrival station.",
+    "Set the date to '2025-05-01' and select 2 passengers."
+  ],
+  "reasoning": "Reinitiating the ticket booking process is crucial. Completing these steps again will allow for searching available trains in a timely manner."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 40: 출발일 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 90: Next
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action input_text: Failed to input text into index 41
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 116: 1
+출발일
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 172: 16시
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 179: 적용
+
+ AIMessage 
+{
+  "state_analysis": "Successfully set the departure station to \uc11c\uc6b8 (Seoul), arrival to \ubd80\uc0b0 (Busan), date to 2025-05-01, and time to 16:00. The passenger count still needs to be set, but the current setup is almost complete.",
+  "progress_evaluation": "Progress at 80%. All major fields are filled apart from confirming the passenger count.",
+  "challenges": "There is an ongoing issue with the input for the passenger count, which needs to be resolved to proceed to the final step of booking.",
+  "next_steps": [
+    "Attempt to input '2' for the number of passengers again.",
+    "Click the search button to find available trains.",
+    "Review the available options and proceed with booking."
+  ],
+  "reasoning": "Setting the passenger count to '2' is essential to complete the booking process, enabling the search for available trains based on the selected criteria."
+}
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 45: 인원 선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action click_element: Element with index 123 does not exist - retry or use alternative actions
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/main
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/main', title='코레일 승차권예매')]
+Interactive elements from top layer of the current page inside the viewport:
+... 667 pixels above - scroll or extract content to see more ...
+[0]<a 본문 바로가기/>
+[1]<a 주메뉴 바로가기/>
+[2]<a 코레일 기업홍보 사이트로 이동>한국철도/>
+[3]<a 코레일 승차권예매 사이트로 이동>승차권예매/>
+[4]<a 코레일 기차여행 사이트로 이동>기차여행/>
+[5]<a 로그아웃/>
+[6]<a 장바구니/>
+[7]<a 마이페이지/>
+[8]<a 고객센터/>
+[9]<a 기업전용/>
+[10]<select 사이트 언어>Language
+English
+中國語
+日本語/>
+[11]<a 코레일 승차권예매 메인페이지로 이동/>
+[12]<a 승차권/>
+[13]<a 철도역·열차/>
+[14]<a 고객서비스/>
+[15]<a 코레일멤버십/>
+[16]<button 전체 메뉴 열기/>
+[17]<button Previous/>
+[18]<div />
+[19]<a 열기/>
+[20]<img />
+[21]<a 새 창으로 열기/>
+[22]<img />
+[23]<a 열기/>
+[24]<img />
+[25]<div />
+[26]<a 새 창으로 열기/>
+[27]<img />
+[28]<div />
+[29]<a 열기/>
+[30]<img />
+[31]<button Next/>
+[32]<button 항목 선택;항목 번호>1/>
+[33]<button 항목 선택;항목 번호>2/>
+[34]<button 항목 선택;항목 번호>정지/>
+[35]<a 승차권 예매/>
+[36]<a 승차권 확인/>
+[37]<a 예약승차권 조회/취소/>
+[38]<a 승차권 이용안내/>
+[39]<a 고객센터/>
+예약보관금 반환접수
+출발역
+출발역 선택
+도착역
+도착역 선택
+출발일
+출발일 선택
+인원
+인원 선택
+열차 조회하기
+코레일은
+다양한 할인상품
+으로 고객에게 다가가고 있습니다.
+[40]<div />
+[41]<a 맘편한 KTX/>
+[42]<div />
+[43]<a 힘내라 청춘/>
+[44]<div />
+[45]<a 청소년 드림/>
+[46]<div />
+[47]<a 영업할인 공통안내/>
+[48]<div />
+[49]<a 4인동반석/>
+[50]<div />
+[51]<a 인터넷 특가/>
+[52]<div />
+[53]<a 공공할인/>
+[54]<div />
+[55]<a 다자녀 행복/>
+[56]<div />
+[57]<a 맘편한 KTX/>
+[58]<div />
+[59]<a 힘내라 청춘/>
+[60]<div />
+[61]<a 청소년 드림/>
+[62]<div />
+[63]<a 영업할인 공통안내/>
+[64]<div />
+[65]<a 4인동반석/>
+인터넷 특가
+공공할인
+다자녀 행복
+맘편한 KTX
+힘내라 청춘
+청소년 드림
+영업할인 공통안내
+[66]<div />
+[67]<a 4인동반석/>
+[68]<a 승차권
+이용안내/>
+[69]<a 광명역
+도심공항터미널/>
+[70]<a 할인제도/>
+[71]<a 유실물/>
+[72]<a 승차권
+제휴할인/>
+[73]<a 열차운임/
+시간표/>
+[74]<a 더보기/>
+[75]<a 5월 2일 ITX-청춘 예발매일 변경 알림
+2025-04-01/>
+[76]<a 4월(4월1일~4월9일) 네이버페이머니 프로모션 알림
+2025-03-31/>
+[77]<a 4월(4월1일~4월9일) 토스페이 원클릭결제 프로모션 알림
+2025-03-31/>
+[78]<a 코레일 사칭 해킹메일 주의 안내
+2025-03-28/>
+[79]<a 교외선 열차 운행조정 알림
+2025-03-28/>
+[80]<a ’25년 산불 발생 관련 특별재난지역 자원봉사자 지원 안내
+2025-03-27/>
+[81]<a 코레일 유튜브 (새창으로 열림)/>
+[82]<img />
+[83]<a 코레일 페이스북 (새창으로 열림)/>
+[84]<img />
+[85]<a 코레일 인스타 (새창으로 열림)/>
+[86]<img />
+[87]<a 코레일 블로그 (새창으로 열림)/>
+[88]<img />
+[89]<a 코레일 트위터 (새창으로 열림)/>
+[90]<img />
+[91]<a 이용약관/>
+[92]<a 새 창으로 열기>여객운송약관 및 부속약관/>
+[93]<a 개인정보처리방침/>
+[94]<a 이메일무단수집거부/>
+[95]<a 새 창으로 열기>저작권정책/>
+[96]<a 지원 브라우저 안내/>
+[97]<img />
+[98]<button 관련 사이트 선택;false>관련 사이트/>
+[99]<div />
+[100]<div dialog>인원선택
+어른(13세 이상)
+0
+어린이(6 ~ 12세)
+0
+유아(6세 미만)
+유아
+(6세 미만)
+6세 미만의 유아는 어른 1명당 유아 1명까지 별도의 좌석 지정없이 보호자가 동반하여 승차할 수 있습니다.(다만, 좌석을 지정하거나 어른 1명당 유아 1명을 초과하여 이용하는 경우, 유아 승차권을 별도로 구매하셔야 합니다.)
+0
+경로(65세 이상)
+0
+중증 장애인
+중증
+장애인
+장애의 정도가 심한 장애인(장애 1~3급)
+0
+경증 장애인
+경증
+장애인
+장애의 정도가 심하지 않은 장애인(장애 4~6급)
+0
+국가유공자
+0
+적용/>
+[101]<button 레이어닫기/>
+[102]<button 어른 인원 감소 버튼/>
+[103]<button 어른 인원 증가 버튼/>
+[104]<button 어린이 인원 감소 버튼/>
+[105]<button 어린이 인원 증가 버튼/>
+[106]<button />
+[107]<img />
+[108]<button 유아 인원 감소 버튼/>
+[109]<button 유아 인원 증가 버튼/>
+[110]<button 경로 인원 감소 버튼/>
+[111]<button 경로 인원 증가 버튼/>
+[112]<button />
+[113]<img />
+[114]<button 중증 인원 감소 버튼/>
+[115]<button 중증 인원 증가 버튼/>
+[116]<button />
+[117]<img />
+[118]<button 경증 인원 감소 버튼/>
+[119]<button 경증 인원 증가 버튼/>
+[120]<button 국가유공자 인원 감소 버튼/>
+[121]<button 국가유공자 인원 증가 버튼/>
+[122]<button 취소/>
+... 951 pixels below - scroll or extract content to see more ...
+Current step: 22/500Current date and time: 2025-04-03 17:44
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success - Open passenger selection.",
+    "memory": "Arrived at passenger selection. Require increase of 'adults' age group to 2 for ticket booking.",
+    "next_goal": "Increase adult passenger count to 2 and click 'apply' to save selections."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 103
+      }
+    },
+    {
+      "click_element": {
+        "index": 100
+      }
+    }
+  ]
+}

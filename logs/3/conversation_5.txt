@@ -1,0 +1,259 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+다음 조건에 맞는 기차표를 예매해줘
+날짜 = 2025년 5월 15일
+출발역 = 서울
+도착역 = 부산
+기차표 개수 = 2개
+
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number
+비밀번호 = x_password
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 500 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 500 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 14: 승차권
+이용안내
+
+ AIMessage 
+```json
+{
+    "state_analysis": "I have accessed the FAQ section of the Korail website but haven't reached the train booking options yet. The current page is focused on frequently asked questions related to ticketing.",
+    "progress_evaluation": "Progress at 40% - I reached the FAQ section but need to navigate to the ticket booking area.",
+    "challenges": [
+        "Navigating from the FAQ section to the booking page may require multiple clicks.",
+        "Noticing the relevant interactive elements quickly is essential."
+    ],
+    "next_steps": [
+        "Click on the '승차권예매' link to go to the ticket booking section.",
+        "If that is not visible, go back to the main ticket page."
+    ],
+    "reasoning": "Accessing the specific section for ticket booking is necessary to proceed with the reservation. If the link to '승차권예매' is not accessible, refocusing on the main ticket page will be the next viable option."
+}
+```
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/reserve/guide/faq
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/reserve/guide/faq', title='자주찾는 질문(FAQ)')]
+Interactive elements from top layer of the current page inside the viewport:
+[Start of page]
+본문 바로가기
+[0]<a 주메뉴 바로가기/>
+[1]<a 코레일 기업홍보 사이트로 이동>한국철도/>
+[2]<a 코레일 승차권예매 사이트로 이동>승차권예매/>
+[3]<a 코레일 기차여행 사이트로 이동>기차여행/>
+[4]<a 로그인/>
+[5]<a 장바구니/>
+[6]<a 마이페이지/>
+[7]<a 고객센터/>
+[8]<a 기업전용/>
+[9]<select 사이트 언어>Language
+English
+中國語
+日本語/>
+[10]<a 코레일 승차권예매 메인페이지로 이동/>
+[11]<a 승차권/>
+[12]<a 철도역·열차/>
+[13]<a 고객서비스/>
+[14]<a 코레일멤버십/>
+[15]<button 전체 메뉴 열기/>
+자주찾는 질문(FAQ)
+[16]<a 홈/>
+[17]<button 1depth 메뉴 목록;false>이용안내/>
+[18]<button 2depth 메뉴 목록;false>자주찾는 질문(FAQ)/>
+[19]<button 인쇄/>
+[20]<li />
+[21]<button 현재선택된 탭>승차권구매/>
+[22]<li />
+[23]<button 승차권이용/>
+[24]<li />
+[25]<button 승차권환불/>
+[26]<li />
+[27]<button 코레일멤버십/>
+[28]<li />
+[29]<button 모바일티켓/>
+[30]<li />
+[31]<button 홈티켓/>
+[32]<li />
+[33]<button 결제/>
+[34]<li />
+[35]<button 기타/>
+[36]<a true>Q
+정기승차권에 대하여 궁금합니다./>
+A
+정기승차권의 종류는 일반형(10일용 또는 1개월용, 월~금요일 이용)과 기간 자유형(10일~1개월 기간 자유선택, 휴일포함 이용
+                                                여부 선택)이 있으며 열차 종류에
+                                                따라 청소년용과 일반용이 있습니다.
+                                                정기승차권은 코레일톡 앱에서 구매할 수 있으며(다만 스마트폰 미사용 고객에 한하여 역 매표창구에서도 구매 가능) 기명식 승차권으로
+                                                승차권에 표기된 고객에
+                                                한하여 사용할 수 있습니다.
+[37]<button 새 창으로 열기>정기승차권 이용안내 확인하기/>
+[38]<a true>Q
+예약대기란 무엇인가요?/>
+A
+매진열차에 취소된 좌석이 생기면 신청순서에 따라 좌석을 배정해 드리는 서비스입니다.
+좌석이 매진된 경우 열차 출발 2일 전까지 온라인으로 신청할 수 있으며, 좌석이 배정된 경우 SMS 또는 온라인을 통해 확인하실 수 있습니다.
+(좌석이 배정된 경우 배정된 당일 24시까지 결제해야 하며, 결제하지 않은 경우 취소됩니다.)
+[39]<a true>Q
+어린이나 유아는 할인 받을 수 있나요?/>
+A
+6세 이상 13세 미만 어린이는 운임의 50%를 할인합니다.  6세 미만의 유아는 운임의 75%를 할인합니다. (단, 유아의 좌석을 지정하지 않을시 보호자 1명당 유아 1명의 운임은 받지 않습니다.)
+☞ 고객 연령 및 좌석수 선택에서 어린이 또는 유아 선택 시 결제화면에서 자동할인이 적용됩니다.
+[40]<a true>Q
+시간 촉박으로 승차권 없이 열차에 승차하면 어떻게 되나요?/>
+A
+승차권을 구매하지 않고 무단으로 승차한 경우 기준 운임의 0.5배에 해당하는 부가운임을 징수합니다.
+[41]<a true>Q
+승차권을 보다 저렴하게 구입할 수 있는 할인제도가 궁금합니다./>
+A
+코레일에서는 청소년 할인, 청년 할인, 임산부 할인, 다자녀 할인 등 다양한 할인제도를 운영하고 있습니다.
+[42]<button 새 창으로 열기>자세한 할인제도 확인하기/>
+[43]<a true>Q
+KTX 자유석은 무엇인가요?/>
+A
+주중(토, 일, 공휴일 제외) 출퇴근시간대 지정된 호차의 좌석을 지정하지 않고 자유롭게 이용할 수 있는 객실로 일반실 좌석운임의 5%를 할인합니다. 자유석 객실에는 정기승차권 소지 고객도 함께 승차할 수 있으며, 이용객이 많은 일부 열차는 입석으로 이용할 수 있습니다.
+... 1745 pixels below - scroll or extract content to see more ...
+Current step: 4/500Current date and time: 2025-04-03 16:30
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success - I accessed the FAQ page successfully, but this isn\u2019t the desired ticket booking section.",
+    "memory": "Currently in step 4. I found the FAQ section but did not reach the ticket booking.",
+    "next_goal": "Click on the '\ucf54\ub808\uc77c \uc2b9\ucc28\uad8c\uc608\ub9e4 \uc0ac\uc774\ud2b8\ub85c \uc774\ub3d9' link to go to the ticket booking page."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 2
+      }
+    }
+  ]
+}

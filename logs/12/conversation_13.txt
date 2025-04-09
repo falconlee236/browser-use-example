@@ -1,0 +1,459 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """
+2명이 타야하는 기차표를 예매해줘
+그러기 위해서는 로그인을 하고 열차를 조회한다음에 좌석을 찾아야겠지?
+아니 그리고 날짜가 없으면 화살표나 스크롤을 하면서 찾으면 되는것도 알지?
+예약 다하면 아래에 있는 예약 버튼을 눌러서 예약 확인 페이지까지 보여주면 완료야
+
+
+<중요 정보>
+그리고 로그인을 한다면 휴대폰 번호로 로그인할거야. 정보는 다음과 같아
+전화번호 = x_number 비밀번호 = x_password     
+조건은 다음과 같아
+날짜 = 2025년 5월 1일
+출발역 = 서울
+도착역 = 부산
+총 인원수 = 2명
+
+<참고사항>
+나는 창가자리가 좋지만 창가 자리가 없으면 상관 없어.
+하지만 두 좌석이 붙어 있어야해.
+시각은 저녁시간대면 좋겠고 그런 기차표가 없다면 다른 날짜를 찾아서라도 구해와.
+제발 overlay된 html 속성을 집중하고, 그게 어려우면 먼저 예약 버튼을 누르고 설정하자.
+""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Here are placeholders for sensitve data: ['x_number', 'x_password']To use them, write <secret>the placeholder name</secret>
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.korail.com/ticket/main
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 100 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 5: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 24: 휴대폰 번호
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 28
+
+ HumanMessage 
+Action result: ⌨️  Input sensitive data into index 29
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 30: 로그인
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 37: 출발역 선택
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 5
+
+ AIMessage 
+```json
+{
+    "state_analysis": "Logged in successfully and currently on the ticket reservation page. The departure station selection dialog has been opened.",
+    "progress_evaluation": "40% - Logged in and initiated the train search process.",
+    "challenges": "Need to select the departure station and continue with date and passenger details. Ensure that adjacent seats are available for the specified date.",
+    "next_steps": [
+        "Select '서울' as the departure station.",
+        "Close the station selection dialog.",
+        "Select '부산' as the destination station."
+    ],
+    "reasoning": "Selecting '서울' as the departure station is the first step to continue with the ticket searching process. This is crucial to proceed to the next stage of finding available trains and ensuring seat preference."
+}
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 94: 서울
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 38: 도착역 선택
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 117: 부산
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 43: 출발일 선택
+
+ AIMessage 
+```json
+{
+    "state_analysis": "Date selection dialog is open and the calendar is displayed. The intended date of May 1, 2025, is not currently selected.",
+    "progress_evaluation": "60% - Successfully selected departure and arrival stations. Now need to finalize the date and time for the ticket search.",
+    "challenges": "Ensure to select the correct date (May 1, 2025) and an evening time slot. Additionally, verify the number of passengers as 2.",
+    "next_steps": [
+        "Scroll to the date of May 1, 2025, and select it.",
+        "Choose the evening time slot (preferably 18:00).",
+        "Confirm the number of passengers as 2 and proceed with the search."
+    ],
+    "reasoning": "The next actions are critical in finalizing the ticket search parameters. Proper date and time selection will allow the system to find relevant train options that meet the user's preferences."
+}
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 90: Next
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 105: 4
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 102: 1
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action error: Error executing action click_element: Element with index 175 does not exist - retry or use alternative actions
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 169: 적용
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+```json
+{
+    "state_analysis": "Successfully set the departure and arrival stations, date, time, and passenger count. The ticket search parameters are now complete.",
+    "progress_evaluation": "80% - All inputs for searching tickets have been confirmed. The next step is to initiate the train search.",
+    "challenges": "Ensure the search returns evening train options with adjacent seats. If not available, may need alternate dates.",
+    "next_steps": [
+        "Click the '열차 조회하기' button to search for available trains."
+    ],
+    "reasoning": "Initiating the train search is the crucial next step to find suitable tickets. Once the search is completed, the next actions will involve evaluating the available options."
+}
+```
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.korail.com/ticket/main
+Available tabs:
+[TabInfo(page_id=0, url='about:blank', title=''), TabInfo(page_id=1, url='https://www.korail.com/ticket/main', title='코레일 승차권예매')]
+Interactive elements from top layer of the current page inside the viewport:
+[Start of page]
+본문 바로가기
+[0]<a 주메뉴 바로가기/>
+[1]<a 코레일 기업홍보 사이트로 이동>한국철도/>
+[2]<a 코레일 승차권예매 사이트로 이동>승차권예매/>
+[3]<a 코레일 기차여행 사이트로 이동>기차여행/>
+[4]<a 로그아웃/>
+[5]<a 장바구니/>
+[6]<a 마이페이지/>
+[7]<a 고객센터/>
+[8]<a 기업전용/>
+[9]<select 사이트 언어>Language
+English
+中國語
+日本語/>
+[10]<a 코레일 승차권예매 메인페이지로 이동/>
+[11]<a 승차권/>
+[12]<a 철도역·열차/>
+[13]<a 고객서비스/>
+[14]<a 코레일멤버십/>
+[15]<button 전체 메뉴 열기/>
+[16]<button Previous/>
+[17]<div />
+[18]<div />
+[19]<a 열기/>
+[20]<img />
+[21]<div />
+[22]<a 열기/>
+[23]<img />
+[24]<div />
+[25]<a 열기/>
+[26]<img />
+[27]<button Next/>
+[28]<button 1/>
+[29]<button 2/>
+[30]<button 정지/>
+비즈니스
+이상윤
+님
+마일리지 :
+0
+p
+[31]<a 승차권 예매/>
+[32]<a 승차권 확인/>
+[33]<a 예약승차권 조회/취소/>
+[34]<a 승차권 이용안내/>
+[35]<a 고객센터/>
+[36]<a 예약보관금 반환접수/>
+출발역
+[37]<a 출발역 선택/>
+도착역
+[38]<a 도착역 선택/>
+출발일
+[39]<div />
+[40]<a 출발일 선택/>
+인원
+[41]<a 인원 선택/>
+[42]<button 열차 조회하기/>
+코레일은
+다양한 할인상품
+으로 고객에게 다가가고 있습니다.
+[43]<button Previous/>
+[44]<div />
+[45]<div />
+[46]<a 맘편한 KTX/>
+[47]<div />
+[48]<a 힘내라 청춘/>
+[49]<div />
+[50]<a 청소년 드림/>
+[51]<div />
+[52]<a 영업할인 공통안내/>
+[53]<div />
+[54]<a 4인동반석/>
+[55]<div />
+[56]<a 인터넷 특가/>
+[57]<div />
+[58]<a 공공할인/>
+[59]<div />
+[60]<a 다자녀 행복/>
+[61]<div />
+[62]<a 맘편한 KTX/>
+[63]<div />
+[64]<a 힘내라 청춘/>
+[65]<div />
+[66]<a 청소년 드림/>
+[67]<div />
+[68]<a 영업할인 공통안내/>
+[69]<div />
+[70]<a 4인동반석/>
+[71]<div />
+[72]<a 인터넷 특가/>
+[73]<div />
+[74]<a 공공할인/>
+[75]<div />
+[76]<a 다자녀 행복/>
+[77]<div />
+[78]<a 맘편한 KTX/>
+[79]<div />
+[80]<a 힘내라 청춘/>
+[81]<div />
+[82]<a 청소년 드림/>
+[83]<div />
+[84]<a 영업할인 공통안내/>
+[85]<div />
+[86]<a 4인동반석/>
+[87]<button Next/>
+[88]<img />
+[89]<img />
+[90]<a 승차권
+이용안내/>
+[91]<a 광명역
+도심공항터미널/>
+[92]<a 할인제도/>
+[93]<a 유실물/>
+[94]<a 승차권
+제휴할인/>
+[95]<a 열차운임/
+시간표/>
+[96]<a 더보기/>
+[97]<a 5월 2일 ITX-청춘 예발매일 변경 알림
+2025-04-01/>
+[98]<a 4월(4월1일~4월9일) 네이버페이머니 프로모션 알림
+2025-03-31/>
+[99]<a 4월(4월1일~4월9일) 토스페이 원클릭결제 프로모션 알림
+2025-03-31/>
+[100]<a 코레일 사칭 해킹메일 주의 안내
+2025-03-28/>
+[101]<a 교외선 열차 운행조정 알림
+2025-03-28/>
+[102]<a ’25년 산불 발생 관련 특별재난지역 자원봉사자 지원 안내
+2025-03-27/>
+[103]<a 코레일 유튜브 (새창으로 열림)/>
+[104]<img />
+[105]<a 코레일 페이스북 (새창으로 열림)/>
+[106]<img />
+[107]<a 코레일 인스타 (새창으로 열림)/>
+[108]<img />
+[109]<a 코레일 블로그 (새창으로 열림)/>
+[110]<img />
+[111]<a 코레일 트위터 (새창으로 열림)/>
+[112]<img />
+[113]<a 이용약관/>
+[114]<a 새 창으로 열기>여객운송약관 및 부속약관/>
+[115]<a 개인정보처리방침/>
+[116]<a 이메일무단수집거부/>
+[117]<a 새 창으로 열기>저작권정책/>
+[118]<a 지원 브라우저 안내/>
+[119]<img />
+[120]<button false;관련 사이트 선택>관련 사이트/>
+... 1618 pixels below - scroll or extract content to see more ...
+Current step: 12/500Current date and time: 2025-04-03 18:03
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Failed - Need to set the number of passengers to 2 and initiate search.",
+    "memory": "Seoul to Busan, May 1, 2025, at 18:00. Update passengers to 2 and proceed with train search.",
+    "next_goal": "Set the number of passengers to 2 and then click '\uc5f4\ucc28 \uc870\ud68c\ud558\uae30' to search for trains."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 41
+      }
+    },
+    {
+      "click_element": {
+        "index": 42
+      }
+    }
+  ]
+}
